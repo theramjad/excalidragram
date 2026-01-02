@@ -270,122 +270,146 @@ export default function Home() {
 
         {/* Generated Images Grid */}
         {generatedImages.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">
-              Generated Images ({generatedImages.length})
-            </h2>
-            <p className="text-sm text-gray-500">Click an image to select it for refinement</p>
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-medium text-foreground">
+                Generated Images ({generatedImages.length})
+              </h2>
+              <p className="text-sm text-gray-500">Click an image to select it for refinement</p>
+            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {generatedImages.map((img, index) => (
-                <div key={img.id} className="space-y-3">
-                  {/* Main generated image */}
-                  <div
-                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-4 transition-all ${
-                      selectedImageId === img.id
-                        ? "border-blue-500 ring-2 ring-blue-300"
-                        : "border-transparent hover:border-gray-300"
-                    }`}
-                    onClick={() => setSelectedImageId(selectedImageId === img.id ? null : img.id)}
+                <div
+                  key={img.id}
+                  className={`relative group cursor-pointer rounded-lg overflow-hidden border-4 transition-all ${
+                    selectedImageId === img.id
+                      ? "border-blue-500 ring-2 ring-blue-300"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                  onClick={() => setSelectedImageId(selectedImageId === img.id ? null : img.id)}
+                >
+                  <img
+                    src={img.url}
+                    alt={`Generated ${index + 1}`}
+                    className="w-full aspect-video object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalImage(img.url);
+                    }}
+                    className="absolute top-2 left-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <img
-                      src={img.url}
-                      alt={`Generated ${index + 1}`}
-                      className="w-full aspect-square object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setModalImage(img.url);
-                      }}
-                      className="absolute top-2 left-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadImage(img.url, `generated-${index + 1}`);
-                      }}
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    </button>
-                    {selectedImageId === img.id && (
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                        Selected
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Refinement input - appears below selected image */}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadImage(img.url, `generated-${index + 1}`);
+                    }}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
                   {selectedImageId === img.id && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
-                      <textarea
-                        value={refinementPrompt}
-                        onChange={(e) => setRefinementPrompt(e.target.value)}
-                        rows={2}
-                        className="w-full px-3 py-2 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-foreground text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        placeholder="What should be changed?"
-                      />
-                      <button
-                        onClick={() => handleRefine(img)}
-                        disabled={!refinementPrompt.trim() || refiningImageId === img.id}
-                        className={`w-full py-2 px-3 rounded text-sm font-medium text-white transition-colors ${
-                          refinementPrompt.trim() && refiningImageId !== img.id
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-gray-400 cursor-not-allowed"
-                        }`}
-                      >
-                        {refiningImageId === img.id ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Refining...
-                          </span>
-                        ) : (
-                          "Refine → Generate 3 Variations"
-                        )}
-                      </button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                      Selected
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
 
-                  {/* Refinement results */}
-                  {img.refinements.length > 0 && (
-                    <div className="grid grid-cols-3 gap-1">
+            {/* Refinement input - full width below grid */}
+            {selectedImageId && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={generatedImages.find(img => img.id === selectedImageId)?.url}
+                    alt="Selected"
+                    className="w-20 h-12 object-cover rounded"
+                  />
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Refine this image
+                    </label>
+                    <p className="text-xs text-gray-500">Describe what changes you want to make</p>
+                  </div>
+                </div>
+                <textarea
+                  value={refinementPrompt}
+                  onChange={(e) => setRefinementPrompt(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-lg border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="What should be changed? e.g., 'Make the colors more vibrant' or 'Add more detail to the background'"
+                />
+                <button
+                  onClick={() => {
+                    const img = generatedImages.find(img => img.id === selectedImageId);
+                    if (img) handleRefine(img);
+                  }}
+                  disabled={!refinementPrompt.trim() || refiningImageId !== null}
+                  className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+                    refinementPrompt.trim() && refiningImageId === null
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  {refiningImageId ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Generating 3 Variations...
+                    </span>
+                  ) : (
+                    "Refine → Generate 3 Variations"
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Refinement results - full width */}
+            {generatedImages.some(img => img.refinements.length > 0) && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-foreground">Refined Variations</h3>
+                {generatedImages.filter(img => img.refinements.length > 0).map((img, imgIndex) => (
+                  <div key={img.id} className="space-y-2">
+                    <p className="text-sm text-gray-500">From image {generatedImages.indexOf(img) + 1}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {img.refinements.map((refined, rIndex) => (
                         <div key={refined.id} className="relative group">
                           <img
                             src={refined.url}
                             alt={`Refined ${rIndex + 1}`}
-                            className="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90"
+                            className="w-full aspect-video object-cover rounded-lg cursor-pointer hover:opacity-90 shadow-md"
                             onClick={() => setModalImage(refined.url)}
                           />
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              downloadImage(refined.url, `refined-${index + 1}-${rIndex + 1}`);
+                              downloadImage(refined.url, `refined-${imgIndex + 1}-${rIndex + 1}`);
                             }}
-                            className="absolute top-1 right-1 bg-black/50 hover:bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           </button>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -395,7 +419,7 @@ export default function Home() {
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center"
+                className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center"
               >
                 <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
               </div>
