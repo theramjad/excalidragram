@@ -109,6 +109,10 @@ function RefinementTree({
   onSelect,
   onPreview,
   onDownload,
+  refinementPrompt,
+  onRefinementPromptChange,
+  onRefine,
+  refiningImageId,
 }: {
   parentLabel: string;
   refinements: GeneratedImage[];
@@ -117,7 +121,13 @@ function RefinementTree({
   onSelect: (id: string | null) => void;
   onPreview: (url: string) => void;
   onDownload: (url: string, name: string) => void;
+  refinementPrompt: string;
+  onRefinementPromptChange: (value: string) => void;
+  onRefine: (img: GeneratedImage) => void;
+  refiningImageId: string | null;
 }) {
+  const selectedInThisRow = refinements.find(r => r.id === selectedImageId);
+
   return (
     <div className={`space-y-3 ${depth > 0 ? "ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700" : ""}`}>
       <p className="text-sm text-gray-500">
@@ -170,6 +180,54 @@ function RefinementTree({
           </div>
         ))}
       </div>
+
+      {/* Refinement panel for this row */}
+      {selectedInThisRow && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={selectedInThisRow.url}
+              alt="Selected"
+              className="w-20 h-12 object-cover rounded"
+            />
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Refine this image
+              </label>
+              <p className="text-xs text-gray-500">Describe what changes you want to make</p>
+            </div>
+          </div>
+          <textarea
+            value={refinementPrompt}
+            onChange={(e) => onRefinementPromptChange(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-3 rounded-lg border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            placeholder="What should be changed? e.g., 'Make the colors more vibrant' or 'Add more detail to the background'"
+          />
+          <button
+            onClick={() => onRefine(selectedInThisRow)}
+            disabled={!refinementPrompt.trim() || refiningImageId !== null}
+            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+              refinementPrompt.trim() && refiningImageId === null
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {refiningImageId === selectedInThisRow.id ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Generating 3 Variations...
+              </span>
+            ) : (
+              "Refine → Generate 3 Variations"
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Recursively render child refinements */}
       {refinements.filter(r => r.refinements.length > 0).map((refined, idx) => (
         <RefinementTree
@@ -181,6 +239,10 @@ function RefinementTree({
           onSelect={onSelect}
           onPreview={onPreview}
           onDownload={onDownload}
+          refinementPrompt={refinementPrompt}
+          onRefinementPromptChange={onRefinementPromptChange}
+          onRefine={onRefine}
+          refiningImageId={refiningImageId}
         />
       ))}
     </div>
@@ -476,8 +538,8 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Refinement input - full width below grid */}
-            {selectedImageId && (
+            {/* Refinement input - only for top-level images */}
+            {selectedImageId && generatedImages.some(img => img.id === selectedImageId) && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
                 <div className="flex items-center gap-3">
                   <img
@@ -541,6 +603,10 @@ export default function Home() {
                     onSelect={setSelectedImageId}
                     onPreview={setModalImage}
                     onDownload={downloadImage}
+                    refinementPrompt={refinementPrompt}
+                    onRefinementPromptChange={setRefinementPrompt}
+                    onRefine={handleRefine}
+                    refiningImageId={refiningImageId}
                   />
                 ))}
               </div>
