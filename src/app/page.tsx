@@ -84,6 +84,23 @@ function addRefinementsToImage(
   });
 }
 
+// Find siblings of a selected image (images in the same row/group)
+function findSiblings(images: GeneratedImage[], targetId: string): GeneratedImage[] | null {
+  // Check top-level images
+  if (images.some(img => img.id === targetId)) {
+    return images;
+  }
+  // Check refinements recursively
+  for (const img of images) {
+    if (img.refinements.some(r => r.id === targetId)) {
+      return img.refinements;
+    }
+    const found = findSiblings(img.refinements, targetId);
+    if (found) return found;
+  }
+  return null;
+}
+
 function RefinementTree({
   parentLabel,
   refinements,
@@ -192,6 +209,32 @@ export default function Home() {
     }
     loadDefaults();
   }, []);
+
+  // Keyboard navigation for left/right arrows
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedImageId || modalImage) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+
+      const siblings = findSiblings(generatedImages, selectedImageId);
+      if (!siblings) return;
+
+      const currentIndex = siblings.findIndex(img => img.id === selectedImageId);
+      if (currentIndex === -1) return;
+
+      let newIndex: number;
+      if (e.key === "ArrowLeft") {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
+      } else {
+        newIndex = currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
+      }
+
+      setSelectedImageId(siblings[newIndex].id);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImageId, generatedImages, modalImage]);
 
   const handleGenerate = async () => {
     if (images.length === 0) {
