@@ -18,7 +18,7 @@ interface GeneratedImage {
   refinements: GeneratedImage[];
 }
 
-const DEFAULT_SYSTEM_PROMPT = `Generate a new creative image in the style of these Excalidraw and the reference images. Use a white background. Capture the visual aesthetic, color palette, artistic techniques, and overall mood of the references. Be creative and produce something unique while maintaining stylistic consistency with the provided examples.`;
+const DEFAULT_SYSTEM_PROMPT = `Generate a new creative image in the style of these Excalidraw and the reference images. Use a white background. Capture the visual aesthetic, color palette, artistic techniques, and overall mood of the references. When depicting people or avatars, prefer using humanoid robots. Be creative and produce something unique while maintaining stylistic consistency with the provided examples.`;
 
 const DEFAULT_IMAGES = [
   "/reference1.png",
@@ -57,6 +57,117 @@ async function loadDefaultImage(url: string): Promise<UploadedImage | null> {
 
 function extractBase64(dataUrl: string): string {
   return dataUrl.split(",")[1] || dataUrl;
+}
+
+function findImageById(images: GeneratedImage[], id: string): GeneratedImage | null {
+  for (const img of images) {
+    if (img.id === id) return img;
+    const found = findImageById(img.refinements, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function addRefinementsToImage(
+  images: GeneratedImage[],
+  targetId: string,
+  newRefinements: GeneratedImage[]
+): GeneratedImage[] {
+  return images.map((img) => {
+    if (img.id === targetId) {
+      return { ...img, refinements: [...img.refinements, ...newRefinements] };
+    }
+    return {
+      ...img,
+      refinements: addRefinementsToImage(img.refinements, targetId, newRefinements),
+    };
+  });
+}
+
+function RefinementTree({
+  parentLabel,
+  refinements,
+  depth,
+  selectedImageId,
+  onSelect,
+  onPreview,
+  onDownload,
+}: {
+  parentLabel: string;
+  refinements: GeneratedImage[];
+  depth: number;
+  selectedImageId: string | null;
+  onSelect: (id: string | null) => void;
+  onPreview: (url: string) => void;
+  onDownload: (url: string, name: string) => void;
+}) {
+  return (
+    <div className={`space-y-3 ${depth > 0 ? "ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700" : ""}`}>
+      <p className="text-sm text-gray-500">
+        From {parentLabel} {depth > 0 && <span className="text-xs text-blue-500">(depth {depth})</span>}
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {refinements.map((refined, rIndex) => (
+          <div
+            key={refined.id}
+            className={`relative group cursor-pointer rounded-lg overflow-hidden border-4 transition-all ${
+              selectedImageId === refined.id
+                ? "border-blue-500 ring-2 ring-blue-300"
+                : "border-transparent hover:border-gray-300"
+            }`}
+            onClick={() => onSelect(selectedImageId === refined.id ? null : refined.id)}
+          >
+            <img
+              src={refined.url}
+              alt={`Refined ${rIndex + 1}`}
+              className="w-full aspect-video object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview(refined.url);
+              }}
+              className="absolute top-2 left-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownload(refined.url, `refined-depth${depth}-${rIndex + 1}`);
+              }}
+              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+            {selectedImageId === refined.id && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                Selected
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {/* Recursively render child refinements */}
+      {refinements.filter(r => r.refinements.length > 0).map((refined, idx) => (
+        <RefinementTree
+          key={refined.id}
+          parentLabel={`Refinement ${idx + 1}`}
+          refinements={refined.refinements}
+          depth={depth + 1}
+          selectedImageId={selectedImageId}
+          onSelect={onSelect}
+          onPreview={onPreview}
+          onDownload={onDownload}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -171,11 +282,7 @@ export default function Home() {
         }));
 
       setGeneratedImages((prev) =>
-        prev.map((img) =>
-          img.id === parentImage.id
-            ? { ...img, refinements: [...img.refinements, ...refinedImages] }
-            : img
-        )
+        addRefinementsToImage(prev, parentImage.id, refinedImages)
       );
       setRefinementPrompt("");
       setSelectedImageId(null);
@@ -331,7 +438,7 @@ export default function Home() {
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={generatedImages.find(img => img.id === selectedImageId)?.url}
+                    src={findImageById(generatedImages, selectedImageId!)?.url}
                     alt="Selected"
                     className="w-20 h-12 object-cover rounded"
                   />
@@ -351,7 +458,7 @@ export default function Home() {
                 />
                 <button
                   onClick={() => {
-                    const img = generatedImages.find(img => img.id === selectedImageId);
+                    const img = findImageById(generatedImages, selectedImageId!);
                     if (img) handleRefine(img);
                   }}
                   disabled={!refinementPrompt.trim() || refiningImageId !== null}
@@ -376,37 +483,22 @@ export default function Home() {
               </div>
             )}
 
-            {/* Refinement results - full width */}
+            {/* Refinement results - recursive tree */}
             {generatedImages.some(img => img.refinements.length > 0) && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-foreground">Refined Variations</h3>
-                {generatedImages.filter(img => img.refinements.length > 0).map((img, imgIndex) => (
-                  <div key={img.id} className="space-y-2">
-                    <p className="text-sm text-gray-500">From image {generatedImages.indexOf(img) + 1}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {img.refinements.map((refined, rIndex) => (
-                        <div key={refined.id} className="relative group">
-                          <img
-                            src={refined.url}
-                            alt={`Refined ${rIndex + 1}`}
-                            className="w-full aspect-video object-cover rounded-lg cursor-pointer hover:opacity-90 shadow-md"
-                            onClick={() => setModalImage(refined.url)}
-                          />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadImage(refined.url, `refined-${imgIndex + 1}-${rIndex + 1}`);
-                            }}
-                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <p className="text-sm text-gray-500">Click any image to select it for further refinement</p>
+                {generatedImages.filter(img => img.refinements.length > 0).map((img) => (
+                  <RefinementTree
+                    key={img.id}
+                    parentLabel={`Image ${generatedImages.indexOf(img) + 1}`}
+                    refinements={img.refinements}
+                    depth={0}
+                    selectedImageId={selectedImageId}
+                    onSelect={setSelectedImageId}
+                    onPreview={setModalImage}
+                    onDownload={downloadImage}
+                  />
                 ))}
               </div>
             )}
