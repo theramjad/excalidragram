@@ -7,6 +7,7 @@ const MODEL_NAME = "gemini-3-pro-image-preview";
 interface GenerateRequest {
   prompt: string;
   referenceImages: { data: string; mimeType: string }[];
+  count?: number;
 }
 
 async function generateSingleImage(
@@ -38,6 +39,10 @@ async function generateSingleImage(
       ],
       config: {
         responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: {
+          aspectRatio: "16:9",
+          imageSize: "4K",
+        },
       },
     });
 
@@ -68,7 +73,7 @@ async function generateSingleImage(
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateRequest = await request.json();
-    const { prompt, referenceImages } = body;
+    const { prompt, referenceImages, count = 5 } = body;
 
     if (!prompt || !referenceImages || referenceImages.length === 0) {
       return NextResponse.json(
@@ -77,9 +82,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate 5 images in parallel
+    // Generate images in parallel
     const results = await Promise.all(
-      Array.from({ length: 5 }, (_, i) =>
+      Array.from({ length: count }, (_, i) =>
         generateSingleImage(prompt, referenceImages, i)
       )
     );

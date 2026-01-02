@@ -3,9 +3,10 @@
 interface ImageGridProps {
   images: (string | null)[];
   isLoading: boolean;
+  onImageClick?: (image: string) => void;
 }
 
-export default function ImageGrid({ images, isLoading }: ImageGridProps) {
+export default function ImageGrid({ images, isLoading, onImageClick }: ImageGridProps) {
   const downloadImage = (dataUrl: string, index: number) => {
     const link = document.createElement("a");
     link.href = dataUrl;
@@ -54,7 +55,8 @@ export default function ImageGrid({ images, isLoading }: ImageGridProps) {
                 <img
                   src={img}
                   alt={`Generated ${index + 1}`}
-                  className="w-full aspect-square object-cover rounded-lg shadow-md"
+                  className="w-full aspect-square object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => onImageClick?.(img)}
                 />
                 <button
                   onClick={() => downloadImage(img, index)}
