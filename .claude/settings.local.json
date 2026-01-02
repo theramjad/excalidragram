@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__exa__get_code_context_exa",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
