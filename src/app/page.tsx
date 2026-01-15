@@ -261,6 +261,7 @@ export default function Home() {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [refinementPrompt, setRefinementPrompt] = useState("");
   const [refiningImageId, setRefiningImageId] = useState<string | null>(null);
+  const [imageCount, setImageCount] = useState(5);
 
   useEffect(() => {
     async function loadDefaults() {
@@ -319,7 +320,7 @@ export default function Home() {
             data: img.base64,
             mimeType: img.mimeType,
           })),
-          count: 5,
+          count: imageCount,
         }),
       });
 
@@ -458,27 +459,46 @@ export default function Home() {
           </div>
         )}
 
-        <button
-          onClick={handleGenerate}
-          disabled={!canGenerate}
-          className={`w-full py-3 px-6 rounded-lg font-medium text-white transition-colors duration-200 ${
-            canGenerate
-              ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Generating 5 Images...
-            </span>
-          ) : (
-            "Generate 5 Images"
-          )}
-        </button>
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2 text-foreground">
+              Number of Images
+            </label>
+            <select
+              value={imageCount}
+              onChange={(e) => setImageCount(Number(e.target.value))}
+              disabled={isLoading}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {[4, 5, 6, 7, 8, 9, 10].map((num) => (
+                <option key={num} value={num}>
+                  {num} images
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleGenerate}
+            disabled={!canGenerate}
+            className={`flex-[3] py-3 px-6 rounded-lg font-medium text-white transition-colors duration-200 ${
+              canGenerate
+                ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Generating {imageCount} Images...
+              </span>
+            ) : (
+              `Generate ${imageCount} Images`
+            )}
+          </button>
+        </div>
 
         {/* Generated Images Grid */}
         {generatedImages.length > 0 && (
@@ -617,7 +637,7 @@ export default function Home() {
         {/* Loading state for initial generation */}
         {isLoading && generatedImages.length === 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: imageCount }).map((_, i) => (
               <div
                 key={i}
                 className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center"
