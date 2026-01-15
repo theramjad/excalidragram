@@ -1,6 +1,6 @@
 # Excalidraw Style Generator
 
-A Next.js app that uses Google's Gemini AI to generate images in the Excalidraw hand-drawn sketch style. Upload reference images, describe what you want to visualize, and generate multiple variations. Then iteratively refine your favorites.
+A Next.js app that uses Google's Gemini AI to generate images in the Excalidraw hand-drawn sketch style. Upload reference images, describe what you want to visualize or simply paste a concept from an article, and generate multiple variations. Then iteratively refine your favorites.
 
 ## Features
 
@@ -18,6 +18,10 @@ A Next.js app that uses Google's Gemini AI to generate images in the Excalidraw 
 3. **Content Input**: Describe what you want to visualize (paste an article, describe a concept, etc.)
 4. **Generation**: The app sends your prompt + reference images to Gemini's image generation model
 5. **Refinement**: Click any generated image and provide refinement instructions to create 3 new variations based on that image
+
+## My Workflow
+
+I personally just paste relevant concepts from articles online and speak using my tool [HyperWhisper](hyperwhisper.com), describing what I want. Generate 5 samples, and iterate on the one I like the most.
 
 ## Setup
 
