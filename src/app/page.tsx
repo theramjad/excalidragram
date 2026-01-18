@@ -18,14 +18,9 @@ interface GeneratedImage {
   refinements: GeneratedImage[];
 }
 
-const DEFAULT_SYSTEM_PROMPT = `Generate a new creative image in the style of these Excalidraw and the reference images. Use a white background. Capture the visual aesthetic, color palette, artistic techniques, and overall mood of the references. When depicting people or avatars, prefer using humanoid robots. Be creative and produce something unique while maintaining stylistic consistency with the provided examples.`;
+const DEFAULT_SYSTEM_PROMPT = `Generate an explanation image in the style of the reference images. This is for generating visual explanations that explain concepts clearly. Use a white background. Capture the visual aesthetic, color palette, artistic techniques, and overall mood of the references. When depicting people or avatars, prefer using humanoid robots. Explain the concept in a similar style to the reference images, using diagrams, annotations, and illustrations as needed.`;
 
-const DEFAULT_IMAGES = [
-  "/reference1.png",
-  "/reference2.png",
-  "/reference3.png",
-  "/reference4.png",
-];
+const DEFAULT_IMAGES = ["reference1.png", "reference2.png", "reference3.png", "reference4.png"];
 
 async function loadDefaultImage(url: string): Promise<UploadedImage | null> {
   try {

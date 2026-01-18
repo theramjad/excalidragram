@@ -102,7 +102,7 @@ export default function ImageUploader({
   return (
     <div className="w-full">
       <label className="block text-sm font-medium mb-2 text-foreground">
-        Reference Images ({images.length}/{maxImages})
+        Reference Images ({images.length})
       </label>
 
       {images.length < maxImages && (
@@ -155,20 +155,20 @@ export default function ImageUploader({
       )}
 
       {images.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-4">
+        <div className="mt-4 flex gap-2 flex-wrap">
           {images.map((img) => (
             <div key={img.id} className="relative group">
               <img
                 src={img.preview}
                 alt="Reference"
-                className="w-full aspect-square object-cover rounded-lg"
+                className="w-36 h-36 object-cover rounded-lg"
               />
               <button
                 onClick={() => removeImage(img.id)}
-                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="w-3 h-3"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
