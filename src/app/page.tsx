@@ -24,6 +24,7 @@ const DEFAULT_IMAGES = [
   "/reference1.png",
   "/reference2.png",
   "/reference3.png",
+  "/reference4.png",
 ];
 
 async function loadDefaultImage(url: string): Promise<UploadedImage | null> {
