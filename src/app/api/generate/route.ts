@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 const MODEL_NAME = "gemini-3-pro-image-preview";
 
 interface GenerateRequest {
   prompt: string;
   referenceImages: { data: string; mimeType: string }[];
   count?: number;
+  apiKey: string;
 }
 
 async function generateSingleImage(
+  genai: GoogleGenAI,
   prompt: string,
   referenceImages: { data: string; mimeType: string }[],
   index: number
@@ -73,7 +74,14 @@ async function generateSingleImage(
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateRequest = await request.json();
-    const { prompt, referenceImages, count = 5 } = body;
+    const { prompt, referenceImages, count = 5, apiKey } = body;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key is required. Please enter your Gemini API key." },
+        { status: 401 }
+      );
+    }
 
     if (!prompt || !referenceImages || referenceImages.length === 0) {
       return NextResponse.json(
@@ -82,10 +90,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create a new GoogleGenAI instance with the user-provided API key
+    const genai = new GoogleGenAI({ apiKey });
+
     // Generate images in parallel
     const results = await Promise.all(
       Array.from({ length: count }, (_, i) =>
-        generateSingleImage(prompt, referenceImages, i)
+        generateSingleImage(genai, prompt, referenceImages, i)
       )
     );
 

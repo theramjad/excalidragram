@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ImageUploader from "@/components/ImageUploader";
+import { useApiKey } from "@/hooks/useApiKey";
 
 interface UploadedImage {
   id: string;
@@ -259,6 +260,39 @@ export default function Home() {
   const [refiningImageId, setRefiningImageId] = useState<string | null>(null);
   const [imageCount, setImageCount] = useState(5);
 
+  // API key management
+  const { apiKey, setApiKey, clearApiKey, isLoaded, hasApiKey } = useApiKey();
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isApiKeyExpanded, setIsApiKeyExpanded] = useState(false);
+
+  // Sync apiKeyInput with stored apiKey when loaded
+  useEffect(() => {
+    if (isLoaded && apiKey) {
+      setApiKeyInput(apiKey);
+    }
+  }, [isLoaded, apiKey]);
+
+  // Auto-expand API key section if no key is set
+  useEffect(() => {
+    if (isLoaded && !hasApiKey) {
+      setIsApiKeyExpanded(true);
+    }
+  }, [isLoaded, hasApiKey]);
+
+  const handleSaveApiKey = () => {
+    if (apiKeyInput.trim()) {
+      setApiKey(apiKeyInput.trim());
+      setIsApiKeyExpanded(false);
+    }
+  };
+
+  const handleClearApiKey = () => {
+    clearApiKey();
+    setApiKeyInput("");
+    setIsApiKeyExpanded(true);
+  };
+
   useEffect(() => {
     async function loadDefaults() {
       const loaded = await Promise.all(DEFAULT_IMAGES.map(loadDefaultImage));
@@ -296,6 +330,12 @@ export default function Home() {
   }, [selectedImageId, generatedImages, modalImage]);
 
   const handleGenerate = async () => {
+    if (!hasApiKey) {
+      setError("Please enter your Gemini API key first");
+      setIsApiKeyExpanded(true);
+      return;
+    }
+
     if (images.length === 0) {
       setError("Please upload at least one reference image");
       return;
@@ -317,6 +357,7 @@ export default function Home() {
             mimeType: img.mimeType,
           })),
           count: imageCount,
+          apiKey: apiKey,
         }),
       });
 
@@ -345,6 +386,12 @@ export default function Home() {
   const handleRefine = async (parentImage: GeneratedImage) => {
     if (!refinementPrompt.trim()) return;
 
+    if (!hasApiKey) {
+      setError("Please enter your Gemini API key first");
+      setIsApiKeyExpanded(true);
+      return;
+    }
+
     setRefiningImageId(parentImage.id);
     setError(null);
 
@@ -365,6 +412,7 @@ export default function Home() {
             },
           ],
           count: 3,
+          apiKey: apiKey,
         }),
       });
 
@@ -415,6 +463,101 @@ export default function Home() {
         <p className="text-gray-600 dark:text-gray-400">
           Generate images in Excalidraw style, then iterate and refine your designs.
         </p>
+      </div>
+
+      {/* API Key Configuration */}
+      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsApiKeyExpanded(!isApiKeyExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span className="font-medium text-foreground">Gemini API Key</span>
+            {hasApiKey ? (
+              <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
+                Configured
+              </span>
+            ) : (
+              <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded-full">
+                Required
+              </span>
+            )}
+          </div>
+          <svg
+            className={`w-5 h-5 text-gray-500 transition-transform ${isApiKeyExpanded ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        {isApiKeyExpanded && (
+          <div className="mt-4 space-y-3">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showApiKey ? "text" : "password"}
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="Enter your Gemini API key..."
+                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  {showApiKey ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <button
+                onClick={handleSaveApiKey}
+                disabled={!apiKeyInput.trim()}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  apiKeyInput.trim()
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                Save
+              </button>
+              {hasApiKey && (
+                <button
+                  onClick={handleClearApiKey}
+                  className="px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">
+              Get your API key from{" "}
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Google AI Studio
+              </a>
+              . Your key is stored locally in your browser and never sent to our servers.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">
