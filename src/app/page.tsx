@@ -362,8 +362,19 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to generate images");
+        let errorMessage = "Failed to generate images";
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {
+          const text = await response.text();
+          if (text.includes("Entity Too Large") || response.status === 413) {
+            errorMessage = "Request too large. Try using fewer or smaller reference images.";
+          } else {
+            errorMessage = text || `Error ${response.status}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -417,8 +428,19 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to refine images");
+        let errorMessage = "Failed to refine images";
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {
+          const text = await response.text();
+          if (text.includes("Entity Too Large") || response.status === 413) {
+            errorMessage = "Request too large. Try using fewer or smaller reference images.";
+          } else {
+            errorMessage = text || `Error ${response.status}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
