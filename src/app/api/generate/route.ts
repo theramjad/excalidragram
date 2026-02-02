@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
+export const maxDuration = 800;
+export const dynamic = "force-dynamic";
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "50mb",
+    },
+  },
+};
+
 const MODEL_NAME = "gemini-3-pro-image-preview";
 
 interface GenerateRequest {
@@ -42,7 +53,7 @@ async function generateSingleImage(
         responseModalities: ["TEXT", "IMAGE"],
         imageConfig: {
           aspectRatio: "16:9",
-          imageSize: "4K",
+          imageSize: "2K",
         },
       },
     });
